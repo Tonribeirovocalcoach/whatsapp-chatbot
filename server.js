@@ -74,3 +74,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`✅ Servidor rodando: https://whatsapp-chatbot-rm35.onrender.com/whatsapp-incoming`)
 );
+
