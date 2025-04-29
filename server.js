@@ -1,5 +1,6 @@
 // Arquivo: server.js
 
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const fs = require('fs');
@@ -8,9 +9,9 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-const OPENAI_API_KEY = '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';
-const ASSISTANT_ID = 'asst_dFBgwC2YY6TlOJRw78Evx36h';
-const WASCRIPT_TOKEN = '1744639676762-4b4e7fd98d22c00c89613b35d1226b8f';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const WASCRIPT_TOKEN = process.env.WASCRIPT_TOKEN;
+const TYPEBOT_WEBHOOK_URL = process.env.TYPEBOT_WEBHOOK_URL;
 const WASCRIPT_API_URL = `https://api-whatsapp.wascript.com.br/api/enviar-texto/${WASCRIPT_TOKEN}`;
 
 const logPath = path.join(__dirname, 'webhook_errors.log');
@@ -25,43 +26,17 @@ app.post('/whatsapp-incoming', async (req, res) => {
   }
 
   try {
-    const threadRes = await axios.post('https://api.openai.com/v1/threads', {}, {
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
-    });
-    const threadId = threadRes.data.id;
-
-    await axios.post(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-      role: 'user',
-      content: mensagem
-    }, {
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
+    const typebotResponse = await axios.post(
+      TYPEBOT_WEBHOOK_URL,
+      { inputs: { user_last_message: mensagem } },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-    const runRes = await axios.post(`https://api.openai.com/v1/threads/${threadId}/runs`, {
-      assistant_id: ASSISTANT_ID
-    }, {
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
-    });
-
-    const runId = runRes.data.id;
-
-    let runStatus = 'queued';
-    while (runStatus !== 'completed') {
-      await new Promise(r => setTimeout(r, 2000));
-      const statusRes = await axios.get(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
-        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
-      });
-      runStatus = statusRes.data.status;
-    }
-
-    const messagesRes = await axios.get(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
-    });
-
-    const botReply = messagesRes.data.data[0]?.content[0]?.text?.value || 'Desculpe, não entendi.';
+    const botReply = typebotResponse.data?.outputs?.assistant_last_message || 'Desculpe, não entendi.';
 
     await axios.post(WASCRIPT_API_URL, {
       telefone,
@@ -81,3 +56,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`✅ Servidor rodando: https://whatsapp-chatbot-rm35.onrender.com/whatsapp-incoming`)
 );
+
