@@ -2,6 +2,8 @@
 
 const express = require('express');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -11,10 +13,14 @@ const ASSISTANT_ID = 'asst_dFBgwC2YY6TlOJRw78Evx36h';
 const WASCRIPT_TOKEN = '1744639676762-4b4e7fd98d22c00c89613b35d1226b8f';
 const WASCRIPT_API_URL = `https://api-whatsapp.wascript.com.br/api/enviar-texto/${WASCRIPT_TOKEN}`;
 
+const logPath = path.join(__dirname, 'webhook_errors.log');
+
 app.post('/whatsapp-incoming', async (req, res) => {
   const { telefone, mensagem } = req.body;
 
   if (!telefone || !mensagem) {
+    const errorMsg = `[${new Date().toISOString()}] ❌ Dados inválidos recebidos: ${JSON.stringify(req.body)}\n`;
+    fs.appendFileSync(logPath, errorMsg);
     return res.status(400).send({ status: 'Telefone e mensagem obrigatórios.' });
   }
 
@@ -65,7 +71,8 @@ app.post('/whatsapp-incoming', async (req, res) => {
     return res.status(200).send({ status: 'Mensagem enviada com sucesso!' });
 
   } catch (error) {
-    console.error('Erro:', error.response?.data || error.message);
+    const errMsg = `[${new Date().toISOString()}] ❌ Erro interno: ${JSON.stringify(error.response?.data || error.message)}\n`;
+    fs.appendFileSync(logPath, errMsg);
     return res.status(500).send({ status: 'Erro ao processar mensagem.' });
   }
 });
@@ -74,4 +81,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`✅ Servidor rodando: https://whatsapp-chatbot-rm35.onrender.com/whatsapp-incoming`)
 );
-
