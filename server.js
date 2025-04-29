@@ -11,19 +11,18 @@ const WASCRIPT_API_URL = `https://api-whatsapp.wascript.com.br/api/enviar-texto/
 const OPENAI_API_KEY = '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';
 const TYPEBOT_WEBHOOK_URL = 'https://typebot.co/api/v1/typebots/bqj4nxgbtzph3ahpz14ympwu/blocks/v7wd8ubv1xnj36yra8fgi8g4/web/executeTestWebhook';
 
-// Endpoint que recebe mensagens do EnvMassa
+// Endpoint correto que recebe mensagens do EnvMassa
 app.post('/whatsapp-incoming', async (req, res) => {
   const { telefone, mensagem } = req.body;
 
   if (!telefone || !mensagem) {
-    return res.status(400).send({ status: 'Telefone e mensagem obrigatórios.' });
+    return res.status(400).send({ status: 'Telefone e mensagem obrigatÃ³rios.' });
   }
 
   try {
-    // Envia a mensagem para o seu ChatBot Typebot
     const typebotResponse = await axios.post(
       TYPEBOT_WEBHOOK_URL,
-      { mensagem: mensagem },
+      { inputs: { user_last_message: mensagem } },
       {
         headers: {
           'Content-Type': 'application/json'
@@ -31,9 +30,8 @@ app.post('/whatsapp-incoming', async (req, res) => {
       }
     );
 
-    const botReply = typebotResponse.data.reply || 'Desculpe, não entendi sua pergunta.';
+    const botReply = typebotResponse.data.reply || 'Desculpe, nÃ£o entendi sua pergunta.';
 
-    // Envia a resposta para o WhatsApp via EnvMassa API
     await axios.post(WASCRIPT_API_URL, {
       telefone: telefone,
       mensagem: botReply
@@ -47,4 +45,4 @@ app.post('/whatsapp-incoming', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor rodando em https://whatsapp-chatbot-rm35.onrender.com/whatsapp-incoming`));
