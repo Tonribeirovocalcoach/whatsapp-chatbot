@@ -6,9 +6,9 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-const OPENAI_API_KEY = 'sk-xxxxx'; // 🔁 Substitua pela sua chave secreta da OpenAI
-const ASSISTANT_ID = 'asst_dFBgwC2YY6TlOJRw78Evx36h'; // já está correto
-const WASCRIPT_TOKEN = '1744639676762-...'; // 🔁 Substitua pelo seu token da Wascript
+const OPENAI_API_KEY = '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';
+const ASSISTANT_ID = 'asst_dFBgwC2YY6TlOJRw78Evx36h';
+const WASCRIPT_TOKEN = '1744639676762-4b4e7fd98d22c00c89613b35d1226b8f';
 const WASCRIPT_API_URL = `https://api-whatsapp.wascript.com.br/api/enviar-texto/${WASCRIPT_TOKEN}`;
 
 app.post('/whatsapp-incoming', async (req, res) => {
@@ -19,13 +19,11 @@ app.post('/whatsapp-incoming', async (req, res) => {
   }
 
   try {
-    // 1. Cria um thread na API de Assistants
     const threadRes = await axios.post('https://api.openai.com/v1/threads', {}, {
       headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
     });
     const threadId = threadRes.data.id;
 
-    // 2. Envia a mensagem do usuário para o thread
     await axios.post(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       role: 'user',
       content: mensagem
@@ -36,7 +34,6 @@ app.post('/whatsapp-incoming', async (req, res) => {
       }
     });
 
-    // 3. Executa o Assistant com o thread
     const runRes = await axios.post(`https://api.openai.com/v1/threads/${threadId}/runs`, {
       assistant_id: ASSISTANT_ID
     }, {
@@ -45,7 +42,6 @@ app.post('/whatsapp-incoming', async (req, res) => {
 
     const runId = runRes.data.id;
 
-    // 4. Aguarda até a execução terminar
     let runStatus = 'queued';
     while (runStatus !== 'completed') {
       await new Promise(r => setTimeout(r, 2000));
@@ -55,14 +51,12 @@ app.post('/whatsapp-incoming', async (req, res) => {
       runStatus = statusRes.data.status;
     }
 
-    // 5. Recupera a resposta da IA
     const messagesRes = await axios.get(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
     });
 
     const botReply = messagesRes.data.data[0]?.content[0]?.text?.value || 'Desculpe, não entendi.';
 
-    // 6. Envia a resposta via Wascript para o WhatsApp
     await axios.post(WASCRIPT_API_URL, {
       telefone,
       mensagem: botReply
@@ -80,4 +74,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`✅ Servidor rodando: https://whatsapp-chatbot-rm35.onrender.com/whatsapp-incoming`)
 );
-
