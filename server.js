@@ -8,7 +8,7 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY = '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';
 const ASSISTANT_ID = 'asst_dFBgwC2YY6TlOJRw78Evx36h';
 const WASCRIPT_TOKEN = '1744639676762-4b4e7fd98d22c00c89613b35d1226b8f';
 const WASCRIPT_API_URL = `https://api-whatsapp.wascript.com.br/api/enviar-texto/${WASCRIPT_TOKEN}`;
